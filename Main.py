@@ -48,7 +48,7 @@ stock_select = window_sidebar.selectbox('Pick a Ticker',(market))
 
 
 #Grabs data from the API
-ticker_stock = st.sidebar.stock_select
+ticker_stock = stock_select
 ticker_data = yf.Ticker(ticker_stock) 
 company_name = ticker_data.info['longName']
 string_logo = '<img src=%s>' % ticker_data.info['logo_url']
@@ -75,8 +75,6 @@ bars = chart.mark_bar().encode(
     y2="Close",
     color = color_conditions)
 candlestick = rules + bars
-
-
 
 
 #Creates the regular chart 
