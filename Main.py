@@ -23,10 +23,10 @@ window_sidebar = st.sidebar.container() # create an empty container in the sideb
 sub_columns = window_sidebar.columns(2) 
 
 
-start_date = sub_columns[0].date_input("Start date", dt.date(2000, 1, 1))
-end_date = sub_columns[1].date_input("End date", dt.date.today())
-market_select = window_sidebar.selectbox('Pick a Market',("S&P 500", "NASDAQ", "Dow Jones", "Other"))
-    
+start_date = sub_columns[0].date_input("Start", dt.date(2010, 1, 1))
+end_date = sub_columns[1].date_input("End", dt.date.today())
+market_select = window_sidebar.selectbox('Select Market',("S&P 500", "NASDAQ", "Dow Jones", "Other"))
+
 
 st.markdown(f'''
     <style>
@@ -35,15 +35,16 @@ st.markdown(f'''
     </style>
 ''',unsafe_allow_html=True)
 
-if st.sidebar.market_select == "S&P 500":
+if market_select == "S&P 500":
         market = snp_500
-elif st.sidebar.market_select == "NASDAQ":
+elif market_select == "NASDAQ":
         market = nasdaq
-elif st.sidebar.market_select == "Dow Jones":
+elif market_select == "Dow Jones":
         market = dow
-elif st.sidebar.market_select == "Other":
+elif market_select == "Other":
         market = other
-stock_select = window_sidebar.selectbox('Pick a Ticker',(market))
+
+stock_select = window_sidebar.selectbox('Select Ticker',(market))
 
 
 
@@ -52,14 +53,35 @@ ticker_stock = stock_select
 ticker_data = yf.Ticker(ticker_stock) 
 company_name = ticker_data.info['longName']
 string_logo = '<img src=%s>' % ticker_data.info['logo_url']
-ticker_df = ticker_data = yf.Ticker(ticker_stock).history(start = start_date, end = end_date) #get the historical prices for this ticker
+ticker_df = ticker_data.history(period= '1d',start = start_date, end = end_date) #get the historical prices for this ticker
 ticker_df["Dates"] = ticker_df.index
+summary = ticker_data.info["longBusinessSummary"]
+
+#Grabs prices 
+max_price = round(ticker_df["High"].max(),2)
+current_price = round(ticker_data.info['regularMarketPrice'],2)
+
+#Calculates change 
+def nearest_business_day(date: dt.date):
+        """
+        Takes a date and transform it to the nearest business day, 
+        static because we would like to use it without a stock object.
+        """
+        if date.weekday() == 5:
+            date = date - dt.timedelta(days=1)
+
+        if date.weekday() == 6:
+            date = date + dt.timedelta(days=1)
+
+
+
 
 
 #Creates the candle chart
 color_conditions = alt.condition("datum.Open <= datum.Close",
                                  alt.value("green"),
-                                 alt.value("red"))# build chart
+                                 alt.value("red"))
+# build chart
 chart = alt.Chart(ticker_df).encode(x = "Dates")
 # set x axis label for chart
 chart.encoding.x.title = "Time"
@@ -84,14 +106,23 @@ chart = alt.Chart(ticker_df).mark_area(line={'color':'darkgreen'},color=alt.Grad
                alt.GradientStop(color='darkgreen', offset=1)])).encode(x="Dates",y="Close")
 
 
-st.header(company_name)
+st.header(company_name + " ("+ticker_stock+")")
+
+window_page = st.container() # create an empty container in the page
+sub_page = window_page.columns(3) 
+sub_page[0].metric("Current", current_price, "-10")
+sub_page[1].metric("1 Year High", max_price, 10)
+sub_page[2].metric("Highest", max_price)
+
+
 #st.markdown(string_logo, unsafe_allow_html=True)
-chart_plot = st.empty()
 agree = st.checkbox('Candle Chart')
 
 if agree:
-   chart_plot.altair_chart(candlestick, use_container_width = True)
+   st.altair_chart(candlestick, use_container_width = True)
 
 else:
-   chart_plot.altair_chart(chart, use_container_width = True)
+   st.altair_chart(chart, use_container_width = True)
 
+
+st.caption(summary)
