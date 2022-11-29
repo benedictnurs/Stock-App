@@ -4,6 +4,7 @@ import numpy as np
 import altair as alt
 import yfinance as yf
 import datetime
+import plotly.graph_objs as go
 from yahoo_fin import stock_info as si
  
 
@@ -20,11 +21,12 @@ other = pd.DataFrame( si.tickers_other() )
 
 #Sidebar of the dashboard
 window_sidebar = st.sidebar.container() # create an empty container in the sidebar
-sub_columns = window_sidebar.columns(2) 
 
 #Date selections for the dashboard
+sub_columns = window_sidebar.columns(2) 
 start_date = sub_columns[0].date_input("Start", datetime.date(2010, 1, 1))
 end_date = sub_columns[1].date_input("End", datetime.date.today())
+
 market_select = window_sidebar.selectbox('Select Market',("S&P 500", "NASDAQ", "Dow Jones", "Other"))
 
 #Market selections for the dashboard
@@ -64,55 +66,45 @@ price_change = round(current_price - starting_price,2)
 percent_change = round(((current_price - starting_price)/starting_price) * 100,2)
 
 
+#Chart Visualization
+chart = go.Figure()
+chart.add_trace(go.Candlestick(
+                x = ticker_df.index,
+                open = ticker_df['Open'],
+                high = ticker_df['High'],
+                low = ticker_df['Low'],
+                close = ticker_df['Close'], 
+                name = 'market data',))
 
+chart.update_layout(
+    autosize=False,
+    width = 800,
+    height = 650,
+)
 
-#Creates the candle chart
-color_conditions = alt.condition("datum.Open <= datum.Close",
-                                 alt.value("green"),
-                                 alt.value("red"))
-# build chart
-chart = alt.Chart(ticker_df).encode(x = "Dates")
-# set x axis label for chart
-chart.encoding.x.title = "Time"
-# construct a rule mark using mark_rule() method
-rules = chart.mark_rule().encode(
-    y = "Low",
-    y2 = "High")
-# adjust y axis label for rules
-rules.encoding.y.title = "Close"
-# construct bars
-bars = chart.mark_bar().encode(
-    y="Open",
-    y2="Close",
-    color = color_conditions)
-candlestick = rules + bars
+# Add titles
+chart.update_layout(
+    #title= f"{company_name} Live Chart",
+    yaxis_title="Price")
 
-
-#Creates the regular chart 
-chart = alt.Chart(ticker_df).mark_area(line={'color':'darkgreen'},color=alt.Gradient(
-        gradient='linear',
-        stops=[alt.GradientStop(color='white', offset=0),
-               alt.GradientStop(color='darkgreen', offset=1)])).encode(x="Dates",y="Close")
 
 #Title of the stock
 st.header(company_name + " ("+ticker_stock+")")
 
+
+
+
 #The Prices and deltas of the stock
 window_page = st.container() # create an empty container in the page
 sub_page = window_page.columns(4) 
-sub_page[0].metric("Current Price", current_price, price_change)
-sub_page[1].metric("Start Price", starting_price, f"{percent_change}%")
+sub_page[0].metric("Current Price", current_price, f"{percent_change:,}%")
+sub_page[1].metric("Start Price", starting_price, price_change)
 sub_page[2].metric("All-Time High", max_price)
 
+#Shows the chart 
+st.plotly_chart(chart, use_container_width=True)
 
-#st.markdown(string_logo, unsafe_allow_html=True)
-agree = st.checkbox('Candle Chart')
 
-if agree:
-   st.altair_chart(candlestick, use_container_width = True)
-
-else:
-   st.altair_chart(chart, use_container_width = True)
 
 #Summarization of the stock
 st.caption(summary)
