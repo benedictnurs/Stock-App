@@ -6,13 +6,6 @@ import plotly.graph_objs as go
 from yahoo_fin import stock_info as si
  
 
-st.set_page_config(
-    page_title = "Stock Application",
-    page_icon="📈",
-    initial_sidebar_state="collapsed",
-    )
-
-
 class Stock():
 	def __init__(self, stock):
 		self.stock = stock
@@ -24,25 +17,30 @@ class Stock():
 	def earnings(self): 
 		return stock.earnings.head().style.format("{:,.0f}")
 
-	#Grabs prices 
+	#Grabs max price 
 	def max_price(self): 
 		return round(ticker_df["High"].max(),2)
 	
+	#Grabs current price
 	def current_price(self): 
-		return round(stock.info['regularMarketPrice'],2)
-	
-	def starting_price(self):
-		return round(ticker_df["Close"].iloc[0],2)
+		price_current = round(stock.info['regularMarketPrice'],2)
+		return price_current
+
+	#Grabs starting price
+	def starting_price(self): 
+		price_start = round(ticker_df["Close"].iloc[0],2)
+		return price_start
 
 
-snp_500 = pd.DataFrame( si.tickers_sp500() )
-nasdaq = pd.DataFrame( si.tickers_nasdaq() )
-dow = pd.DataFrame( si.tickers_dow() )
-other = pd.DataFrame( si.tickers_other() )
+st.set_page_config(
+    page_title = "Stock Application",
+    page_icon="📈",
+    initial_sidebar_state="collapsed",
+    )
 
-#Sidebar of the dashboard
+#Sidebar of the dashboard and creates an empty container in the sidebar
 window_sidebar = st.sidebar.container() 
-#Create an empty container in the sidebar
+
 
 #Date selections for the dashboard
 sub_columns = window_sidebar.columns(2) 
@@ -52,7 +50,14 @@ end_date = sub_columns[1].date_input("End", datetime.date.today())
 
 #Market selections for the dashboard
 market_select = window_sidebar.selectbox('Select Market',("S&P 500", "NASDAQ", "Dow Jones", "Other"))
+
+
 def market_selection():
+        snp_500 = pd.DataFrame( si.tickers_sp500() )        
+        nasdaq = pd.DataFrame( si.tickers_nasdaq() )
+        dow = pd.DataFrame( si.tickers_dow() )
+        other = pd.DataFrame( si.tickers_other() )
+
         if market_select == "S&P 500":
            market = snp_500
         elif market_select == "NASDAQ":
@@ -62,6 +67,7 @@ def market_selection():
         elif market_select == "Other":
                 market = other
         return market
+
 
 #Stock selection for the dashboard
 stock_select = window_sidebar.selectbox('Select Ticker',(market_selection()))
@@ -73,19 +79,9 @@ company_name = stock.info['longName']
 ticker_df = stock.history(period= '1d',start = start_date, end = end_date) #get the historical prices for this ticker
 ticker_df["Dates"] = ticker_df.index
 
+
 #Creates an Object of Stock
 stock_data = Stock(stock)
-
-
-#Grabs prices 
-max_price = round(ticker_df["High"].max(),2)
-current_price = round(stock.info['regularMarketPrice'],2)
-starting_price = round(ticker_df["Close"].iloc[0],2)
-
-
-#Calculates change 
-price_change = round(current_price - starting_price,2)
-percent_change = round(((current_price - starting_price)/starting_price) * 100,2)
 
 
 #Chart Visualization
@@ -107,26 +103,38 @@ def chart():
 
         # Add titles
         fig.update_layout(
-                #title= f"{company_name} Live Chart",
+                #title= f"{company_name} Live Chart",percent_change
                 yaxis_title = "Price")
         return fig
+
 
 #Title of the stock
 st.header(f"{company_name} ({stock_select})")
 
 
-
-
-#The Prices and deltas of the stock
+#The prices and deltas of the stock
 window_page = st.container() # create an empty container in the page
+
+
+#To get the price change
+def price_change(current ,start):  
+	return round(current - start,2)
+
+
+#To get the percent change
+def percent_change(current ,start):  
+	return round(((current - start)/start) * 100,2)
+
+
+#The prices with the deltas
 sub_page = window_page.columns(4) 
-sub_page[0].metric("Current Price", current_price, f"{percent_change:,}%")
-sub_page[1].metric("Start Price", starting_price, price_change)
-sub_page[2].metric("All-Time High", max_price)
+sub_page[0].metric("Current Price", stock_data.current_price(), f"{percent_change(stock_data.current_price(),stock_data.starting_price()):,}%")
+sub_page[1].metric("Start Price", stock_data.starting_price(), price_change(stock_data.current_price(),stock_data.starting_price()))
+sub_page[2].metric("All-Time High", stock_data.max_price())
+
 
 #Shows the chart 
-st.plotly_chart(chart(), use_container_width=True)
-
+st.plotly_chart(chart(), use_container_width = True)
 
 
 #Summarization of the stock
