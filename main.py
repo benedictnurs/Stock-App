@@ -69,6 +69,16 @@ def market_selection():
         return market
 
 
+#To get the price change
+def price_change(current ,start):  
+	return round(current - start,2)
+
+
+#To get the percent change
+def percent_change(current ,start):  
+	return round(((current - start)/start) * 100,2)
+
+
 #Stock selection for the dashboard
 stock_select = window_sidebar.selectbox('Select Ticker',(market_selection()))
 
@@ -116,16 +126,6 @@ st.header(f"{company_name} ({stock_select})")
 window_page = st.container() # create an empty container in the page
 
 
-#To get the price change
-def price_change(current ,start):  
-	return round(current - start,2)
-
-
-#To get the percent change
-def percent_change(current ,start):  
-	return round(((current - start)/start) * 100,2)
-
-
 #The prices with the deltas
 sub_page = window_page.columns(4) 
 sub_page[0].metric("Current Price", stock_data.current_price(), f"{percent_change(stock_data.current_price(),stock_data.starting_price()):,}%")
@@ -136,9 +136,12 @@ sub_page[2].metric("All-Time High", stock_data.max_price())
 #Shows the chart 
 st.plotly_chart(chart(), use_container_width = True)
 
+#Creating tabs 
+tab1, tab2 = st.tabs(["Summarization", "Calculations"])
 
-#Summarization of the stock
-st.caption(stock_data.summary())
-st.table(stock_data.earnings())
+
+#Summarization of the stock 
+tab1.st.caption(stock_data.summary())
+tab1.st.table(stock_data.earnings())
 
 
