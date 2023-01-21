@@ -2,3 +2,4 @@ streamlit
 yfinance
 plotly
 datetime
+yahoo_fin
