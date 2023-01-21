@@ -115,6 +115,13 @@ def chart():
         fig.update_layout(
                 #title= f"{company_name} Live Chart",percent_change
                 yaxis_title = "Price")
+        
+        cs = fig.data[0]
+        # Set line and fill colors
+        cs.increasing.fillcolor = '#3D9970'
+        cs.increasing.line.color = '#3D9970'
+        cs.decreasing.fillcolor = '#FF4136'
+        cs.decreasing.line.color = '#FF4136'
         return fig
 
 
