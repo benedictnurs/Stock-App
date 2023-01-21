@@ -1,1 +1,3 @@
 yfinance
+yahoo_fin
+plotly
