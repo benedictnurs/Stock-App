@@ -1,3 +1,5 @@
+streamlit
 yfinance
 yahoo_fin
-plotly
+plotly.graph_objs
+datetime
