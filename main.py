@@ -44,7 +44,7 @@ window_sidebar = st.sidebar.container()
 
 #Date selections for the dashboard
 sub_columns = window_sidebar.columns(2) 
-start_date = sub_columns[0].date_input("Start", datetime.date(2010, 1, 1))
+start_date = sub_columns[0].date_input("Start", datetime.date(2018, 1, 1))
 end_date = sub_columns[1].date_input("End", datetime.date.today())
 
 
