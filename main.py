@@ -141,7 +141,7 @@ tab1, tab2 = st.tabs(["Summarization", "Calculations"])
 
 
 #Summarization of the stock 
-tab1.st.caption(stock_data.summary())
+tab1.st.text(stock_data.summary())
 tab1.st.table(stock_data.earnings())
 
 
