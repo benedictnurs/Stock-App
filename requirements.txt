@@ -1,4 +1,4 @@
 streamlit
 yfinance
-plotly.graph_objs
+plotly
 datetime
