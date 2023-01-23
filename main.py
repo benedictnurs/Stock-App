@@ -3,8 +3,9 @@ import pandas as pd
 import yfinance as yf
 import datetime
 import plotly.graph_objs as go
+import plotly.express as px
 from yahoo_fin import stock_info as si
- 
+
 
 st.set_page_config(
     page_title = "Stock Application",
@@ -78,7 +79,7 @@ def market_selection():
 
 
 #Chart Visualization
-def chart():
+def chart_candlestick():
         fig = go.Figure()
         fig.add_trace(go.Candlestick(
                 x = ticker_df.index,
@@ -92,12 +93,10 @@ def chart():
                 autosize=False,
                 width = 800,
                 height = 650,
+                yaxis_title = "Price"
+
         )
 
-        # Add titles
-        fig.update_layout(
-                #title= f"{company_name} Live Chart",percent_change
-                yaxis_title = "Price")
         
         cs = fig.data[0]
         # Set line and fill colors
@@ -107,6 +106,34 @@ def chart():
         cs.decreasing.line.color = '#FF4136'
         return fig
 
+
+def chart_line():
+        fig = px.line(
+                ticker_df,
+                y = "Close" 
+                )
+
+
+        fig.update_layout(
+                autosize=False,
+                width = 800,
+                height = 650,
+                yaxis_title = "Price",
+                #xaxis=dict(showgrid=False),
+                #yaxis=dict(showgrid=False)
+        )
+        
+
+        if ticker_df['Close'].iloc[-1] >= ticker_df['Close'].iloc[0]:
+                fig.data[0].line.color = "#3D9970"
+        else:
+                fig.data[0].line.color = "#FF4136"
+
+                
+
+
+        return fig
+        
 
 #Stock selection for the dashboard
 stock_select = window_sidebar.selectbox('Select Ticker',(market_selection()))
@@ -133,7 +160,14 @@ sub_page[1].metric("Start Price", stock_data.starting_price(), price_change(stoc
 sub_page[2].metric("All-Time High", stock_data.max_price())
 
 #Shows the chart 
-st.plotly_chart(chart(), use_container_width = True)
+chartCheck = st.checkbox("Candle Stick Chart")
+chart = chart_line()
+
+if chartCheck == True:
+        chart = chart_candlestick()
+
+st.plotly_chart(chart, use_container_width = True)
+
 
 #Creating tabs 
 tab1, tab2 = st.tabs(["Summarization", "Calculation"])
@@ -148,17 +182,16 @@ investedAmount = tab2.number_input("Initial Amount Invested")
 
 
 def investment_changed():
-        investedGrowth = round(percent_change(stock_data.current_price(),stock_data.starting_price())/100 * investedAmount,2)
-        investedChange = ""
+        investedGrowth = round(percent_change(stock_data.current_price(),stock_data.starting_price())/100 * investedAmount,2) + investedAmount
         if investedGrowth >= investedAmount:
                 investedChange = f""" <p style="font-family:sans-serif; 
                         color:Green;">
-			${"{:,}".format(investedGrowth)}
+			${"{:,}".format(round(float(investedGrowth),2))}
 			</p> """
         else:
                 investedChange = f""" <p style="font-family:sans-serif; 
                         color:Red;">
-			${"{:,}".format(investedGrowth)}
+			${"{:,}".format(round(float(investedGrowth),2))}
 			</p> """
         return investedChange
 
@@ -170,5 +203,41 @@ def get_year():
         return year     
 
 
-tab2.markdown(f"Amount After {str(get_year())} Years", unsafe_allow_html=True)
-tab2.markdown(investment_changed(), unsafe_allow_html=True)
+def gain_loss():
+        gain = round(percent_change(stock_data.current_price(),stock_data.starting_price())/100 * investedAmount,2)
+        change = ''
+        if investedAmount == 0:
+                gain = 0
+
+        if gain >= investedAmount:
+                change = f""" <p style="font-family:sans-serif; 
+                        color:Green;">
+			+${"{:,}".format(round(float(gain),2))}
+			</p> """
+        else:
+                change = f""" <p style="font-family:sans-serif; 
+                        color:Red;">
+			-${"{:,}".format(round(float(abs(gain)),2))}
+			</p> """
+        return change
+
+
+def gain_if():
+        profit = round(percent_change(stock_data.current_price(),stock_data.starting_price())/100 * investedAmount,2)
+        starting = investedAmount
+        gain = profit - starting
+        year = get_year()
+
+        if gain >= starting:
+                change = f'Total Gain After {year} Years'
+        else:
+                change = f'Total Loss After {year} Years'
+        return change
+        
+        
+
+sub_page2 = tab2.columns(2) 
+sub_page2[0].markdown(f"Amount After {str(get_year())} Years", unsafe_allow_html=True)
+sub_page2[0].markdown(investment_changed(), unsafe_allow_html=True)
+sub_page2[1].markdown(gain_if(), unsafe_allow_html=True)
+sub_page2[1].markdown(gain_loss(), unsafe_allow_html=True)
