@@ -41,7 +41,7 @@ class Stock():
 	
 	#Grabs current price
 	def current_price(self): 
-		price_current = round(stock.info['regularMarketPrice'],2)
+		price_current = round(ticker_df["Close"].iloc[-1],2)
 		return price_current
 
 	#Grabs starting price
@@ -141,7 +141,7 @@ tab1, tab2 = st.tabs(["Summarization", "Calculation"])
 
 #Summarization of the stock 
 tab1.caption(stock_data.summary())
-tab1.table(stock_data.earnings())
+#tab1.table(stock_data.earnings())
 
 #Tab 2 
 investedAmount = tab2.number_input("Initial Amount Invested")
