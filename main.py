@@ -128,10 +128,6 @@ def chart_line():
                 fig.data[0].line.color = "#3D9970"
         else:
                 fig.data[0].line.color = "#FF4136"
-
-                
-
-
         return fig
         
 
