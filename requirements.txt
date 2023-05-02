@@ -1,4 +1,4 @@
-yfinance==0.2
+yfinance==0.2.18
 plotly
 datetime
 yahoo_fin
